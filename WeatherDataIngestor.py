@@ -48,13 +48,17 @@ def kelvin_to_celsius(kelvin):
     return round(kelvin - 273.15, 2)
 
 def transform_weather_data(data):
-    """Transform weather data into desired format"""
+    """Transform weather data into desired format, including partition fields."""
+    current_time = datetime.utcnow()
+    # Use Unix epoch time for event_timestamp so that Firehose JQ's strftime can process it
+    event_timestamp = int(current_time.timestamp())
+    
     transformed_data = {
         'city': data['name'],
         'country': data['sys']['country'],
         'weather_condition': data['weather'][0]['main'],
         'weather_description': data['weather'][0]['description'],
-        'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+        'event_timestamp': event_timestamp  # Unix epoch integer
     }
     
     # Temperature conversions
