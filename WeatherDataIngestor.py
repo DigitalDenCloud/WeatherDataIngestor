@@ -2,6 +2,7 @@ import json
 import os
 import urllib3
 import boto3
+import random
 from datetime import datetime
 import logging
 
@@ -19,6 +20,9 @@ DELIVERY_STREAM_NAME = os.environ.get('DELIVERY_STREAM_NAME', 'weather-data-stre
 SECRET_NAME = os.environ.get('WEATHER_API_SECRET_NAME')
 DEFAULT_CITY = os.environ.get('DEFAULT_CITY', 'London')
 WEATHER_API_URL = "https://api.openweathermap.org/data/2.5/weather"
+
+# Optional list of cities to randomly select from
+RANDOM_CITIES = ['London', 'New York', 'Paris', 'Berlin', 'Tokyo', 'Sydney', 'Cairo', 'Toronto', 'Istanbul']
 
 def get_api_key():
     """Retrieve API key from Secrets Manager"""
@@ -90,15 +94,17 @@ def transform_weather_data(data):
 
 def lambda_handler(event, context):
     try:
-        # Get API key and city
+        # Get API key
         api_key = get_api_key()
-        city = event.get('city', DEFAULT_CITY)
-        
+
+        # Determine city to fetch
+        city = event.get('city') or DEFAULT_CITY or random.choice(RANDOM_CITIES)
+        logger.info(f"Fetching weather data for: {city} (source: event input, environment variable, or random fallback)")
+
         if not api_key:
             raise ValueError("No API key available. Set WEATHER_API_KEY environment variable or configure secret.")
         
         # Fetch weather data
-        logger.info(f"Fetching weather data for {city}")
         url = f"{WEATHER_API_URL}?q={city}&appid={api_key}"
         response = http.request('GET', url)
         
